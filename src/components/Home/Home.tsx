@@ -9,6 +9,7 @@ import useLoged from "../../hooks/useLoged";
 
 const Home = () => {
   const [showForm, setShowForm] = useState(true);
+  const [search, setSearch] = useState("");
   const {loged, setLogin} = useLoged()
 
   const handleClick = () => {
@@ -25,8 +26,8 @@ const Home = () => {
   
   return (
     <Grid container>
-      <Header />
-      <Gallery />
+      <Header search={search} setSearch={setSearch}/>
+      {loged && <Gallery search={search}/>}
       <FadeScreen active={!loged}>
         <SigninForm
           showForm={hideSignin}

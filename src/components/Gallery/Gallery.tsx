@@ -15,6 +15,7 @@ import FullScreen from "../FullScreen";
 
 import API from "../../api/axios";
 import { getItem } from "../../api/localStorage";
+import getLoged from "../../api/getLoged";
 import ImageIcon from "@material-ui/icons/Image";
 // import FadeScreen from "../FadeScreen";
 
@@ -82,22 +83,21 @@ const useStyles = makeStyles({
   },
 });
 
-const Gallery = () => {
+const Gallery = (props:any) => {
   const classes = useStyles();
 
   const [pictures, setPictures] = useState<any>([]);
 
   const [dragActive, setDragActive] = useState(false);
   const [fadeActive, setFadeActive] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(getLoged());
   const [index, setIndex] = useState(0);
 
   const getPictures = () => {
-    if (getItem("token")) {
+    if(getItem("token")) {
       setLoading(true);
       API.getPictures((data: any) => {
         setLoading(false);
-        console.log(data);
         setPictures(data);
       });
     }
@@ -218,7 +218,6 @@ const Gallery = () => {
           break;
       }
     }
-    console.log({ key: e.keyCode });
   };
 
   if (pictures.length) {
@@ -238,16 +237,33 @@ const Gallery = () => {
     >
       <Grid container justify="center" className={classes.grid} spacing={5}>
         {pictures?.length ? (
-          pictures.map((picture: any, i: any) => (
-            <Picture
-              key={i}
-              name={picture.name}
-              source={picture.source}
-              type={picture.type}
-              id={picture._id}
-              onClick={handleOpenFullWidth}
-            />
-          ))
+          pictures.map((picture: any, i: any) =>{
+            if(!props.search){
+              return (
+                <Picture
+                  key={i}
+                  name={picture.name}
+                  source={picture.source}
+                  type={picture.type}
+                  id={picture._id}
+                  onClick={handleOpenFullWidth}
+                />
+              )
+            }
+            if(picture.name.includes(props.search)){
+              return (
+                <Picture
+                  key={i}
+                  name={picture.name}
+                  source={picture.source}
+                  type={picture.type}
+                  id={picture._id}
+                  onClick={handleOpenFullWidth}
+                />
+              )
+            }
+            return undefined
+          })
         ) : (
           <h3>There is not images</h3>
         )}

@@ -44,6 +44,11 @@ const Picture = (props: any) => {
   let encType = `data:${props.type};base64,  `;
   if (!props.type) encType = "";
 
+  const resumeName = ()=>{
+    let name = props.name.toUpperCase()
+    return name.length>12?`${name.slice(0,12)}...`:name;
+  }
+
   return (
     <figure id={props.id} className={classes.figure}>
       <img
@@ -53,7 +58,7 @@ const Picture = (props: any) => {
         alt={props.name}
       />
       <figcaption className={classes.caption}>
-        {props.name.toUpperCase()}
+        {resumeName()}
       </figcaption>
     </figure>
   );

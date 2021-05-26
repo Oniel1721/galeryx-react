@@ -36,7 +36,7 @@ const useStyles = makeStyles({
   },
   img: {
     maxWidth: "100%",
-    maxHeight: "100%",
+    maxHeight: "642.5px",
     width: "auto",
     height: "auto",
     padding: 0,
@@ -60,6 +60,7 @@ const useStyles = makeStyles({
   pictureName: {
     fontWeight: "bold",
     cursor: "pointer",
+    justifyContent: ''
   },
   column: {
     minHeight: "100%",
@@ -106,12 +107,12 @@ const FullScreen = (props: any) => {
           <div className={classes.center}>
             <div className={classes.panel}>
               <div className={classes.filler}>
-                <p
+                <h3
                   onClick={props.handleChangeName}
                   className={classes.pictureName}
                 >
                   {getName(picture.name)}
-                </p>
+                </h3>
               </div>
               <IconButton
                 onClick={props.handleDeletePicture}
