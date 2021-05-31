@@ -50,7 +50,7 @@ const Picture = (props: any) => {
   }
 
   return (
-    <figure id={props.id} className={classes.figure}>
+    <figure id={`context-menu-enable ${props.id}`} className={classes.figure}>
       <img
         onClick={props.onClick}
         className={classes.img}

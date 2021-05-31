@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 import {
   Grid,
@@ -17,6 +17,10 @@ import API from "../../api/axios";
 import { getItem } from "../../api/localStorage";
 import getLoged from "../../api/getLoged";
 import ImageIcon from "@material-ui/icons/Image";
+import ContextMenu from "../ContextMenu";
+import RenameDialog from "../RenameDialog";
+
+import { base64StringToBlob, createObjectURL } from 'blob-util'
 // import FadeScreen from "../FadeScreen";
 
 // import { AddIcon } from "@material-ui/icons";
@@ -83,7 +87,7 @@ const useStyles = makeStyles({
   },
 });
 
-const Gallery = (props:any) => {
+const Gallery = (props: any) => {
   const classes = useStyles();
 
   const [pictures, setPictures] = useState<any>([]);
@@ -92,9 +96,13 @@ const Gallery = (props:any) => {
   const [fadeActive, setFadeActive] = useState(false);
   const [loading, setLoading] = useState(getLoged());
   const [index, setIndex] = useState(0);
+  const [showContextMenu, setShowContextMenu] = useState(false)
+  const [contextMenuPositions, setContextMenuPositions] = useState({ x: 0, y: 0 })
+  const [showRenameDialog, setShowRenameDialog] = useState(false)
+  const [renameValue, setRenameValue] = useState('')
 
   const getPictures = () => {
-    if(getItem("token")) {
+    if (getItem("token")) {
       setLoading(true);
       API.getPictures((data: any) => {
         setLoading(false);
@@ -112,10 +120,31 @@ const Gallery = (props:any) => {
     else setIndex(0);
   };
 
+  const handleDownload = (e: any) => {
+    if (getItem("token")) {
+      setLoading(true)
+      API.downloadPicture(pictures[index]._id, (data: any) => {
+        setLoading(false)
+        const url = createObjectURL(base64StringToBlob(data.source, data.type))
+        let type = data.type.includes('png') ? 'png' : 'jpg'
+        let $a = document.createElement("a")
+        $a.href = url
+        $a.setAttribute("download", `${data.name}.${type}`)
+        document.body.appendChild($a)
+        $a.click()
+        document.body.removeChild($a)
+      })
+    }
+  }
+
   const handleBefore = (e: any) => {
     if (index > 0) setIndex(index - 1);
     else setIndex(pictures.length - 1);
   };
+
+  const handleOnOpenInContextMenu = (e: any) => {
+    setFadeActive(true)
+  }
 
   const handleOpenFullWidth = (e: any) => {
     let $all = e.target.parentNode.parentNode.childNodes;
@@ -179,12 +208,12 @@ const Gallery = (props:any) => {
   };
 
   const handleChangeName = (e: any) => {
-    let answer: string | null = prompt(`set a new name`);
-    if (Boolean(answer) && answer !== e.target.textContent) {
-      let id: string = e.target.parentNode.nextSibling.id;
-      API.updatePictureName(id, answer, (data: any) => {
+    if(renameValue){
+      API.updatePictureName(pictures[index]._id, renameValue, (data: any) => {
         getPictures();
       });
+      setRenameValue('')
+      setShowRenameDialog(false)
     }
   };
 
@@ -207,24 +236,34 @@ const Gallery = (props:any) => {
         case 27:
           setFadeActive(false);
           break;
-        case 70:
-          setFadeActive(false);
-          break;
-      }
-    } else {
-      switch (e.keyCode) {
-        case 70:
-          setFadeActive(true);
-          break;
       }
     }
   };
+
+  const handleContextMenu = (e: any) => {
+    if (e.target.parentNode.id.includes('context-menu-enable')) {
+      e.preventDefault()
+      let $all = e.target.parentNode.parentNode.childNodes;
+      let $parent = e.target.parentNode;
+      let indexOfClicked = Array.from($all).indexOf($parent);
+      setIndex(indexOfClicked);
+      setContextMenuPositions({ x: e.clientX, y: e.clientY })
+      setShowContextMenu(true)
+    }
+  }
+
+  const handleRenameDialogOpen = () => {
+    setShowRenameDialog(true)
+  }
+
+  const handleRenameDialogClose = () => {
+    setShowRenameDialog(false)
+  }
 
   if (pictures.length) {
     if (index > pictures.length - 1) handleNext();
   }
 
-  // if (!pictures[index] && pictures) handleNext();
 
   return (
     <div
@@ -233,38 +272,59 @@ const Gallery = (props:any) => {
       onDragEnter={(e) => handleDragEnter(e)}
       onKeyUp={(e) => handleKeyUp(e)}
       tabIndex={0}
+      onClick={() => { setShowContextMenu(false) }}
+      onContextMenu={handleContextMenu}
       className={classes.root}
     >
+      <RenameDialog
+        onSubmit={handleChangeName}
+        onChange={(value: any) => { setRenameValue(value) }}
+        inputValue={renameValue} onOpen={handleRenameDialogOpen}
+        onClose={handleRenameDialogClose}
+        open={showRenameDialog}
+      />
       <Grid container justify="center" className={classes.grid} spacing={5}>
         {pictures?.length ? (
-          pictures.map((picture: any, i: any) =>{
-            if(!props.search){
-              return (
-                <Picture
-                  key={i}
-                  name={picture.name}
-                  source={picture.source}
-                  type={picture.type}
-                  id={picture._id}
-                  onClick={handleOpenFullWidth}
-                />
-              )
-            }
-            if(picture.name.includes(props.search)){
-              return (
-                <Picture
-                  key={i}
-                  name={picture.name}
-                  source={picture.source}
-                  type={picture.type}
-                  id={picture._id}
-                  onClick={handleOpenFullWidth}
-                />
-              )
-            }
-            return undefined
-          })
-        ) : (
+          <>
+            {pictures.map((picture: any, i: any) => {
+              if (!props.search) {
+                return (
+                  <Picture
+                    key={i}
+                    name={picture.name}
+                    source={picture.source}
+                    type={picture.type}
+                    id={picture._id}
+                    onClick={handleOpenFullWidth}
+                  />
+                )
+              }
+              if (picture.name.toUpperCase().includes(props.search.toUpperCase())) {
+                return (
+                  <Picture
+                    key={i}
+                    name={picture.name}
+                    source={picture.source}
+                    type={picture.type}
+                    id={picture._id}
+                    onClick={handleOpenFullWidth}
+                  />
+                )
+              }
+              return undefined
+            })}
+            {showContextMenu
+              &&
+              <ContextMenu
+                posX={contextMenuPositions.x}
+                posY={contextMenuPositions.y}
+                onDelete={handleDeletePicture}
+                onChangeName={handleRenameDialogOpen}
+                onDownload={handleDownload}
+                onOpen={handleOnOpenInContextMenu}
+                close={() => { setShowContextMenu(false) }}
+              />}
+          </>) : (
           <h3>There is not images</h3>
         )}
       </Grid>
@@ -286,9 +346,8 @@ const Gallery = (props:any) => {
       </Fab>
       <Box
         onDragLeave={(e) => handleDragLeave(e)}
-        className={`${classes.dragZone} ${
-          dragActive ? classes.dragZoneActive : ""
-        }`}
+        className={`${classes.dragZone} ${dragActive ? classes.dragZoneActive : ""
+          }`}
       >
         <Box className={classes.inDragZone}>
           <Typography className={classes.dragZoneTxt}>
@@ -299,7 +358,7 @@ const Gallery = (props:any) => {
       {pictures.length ? (
         <Backdrop open={fadeActive} style={{ zIndex: 900 }}>
           <FullScreen
-            handleChangeName={handleChangeName}
+            handleChangeName={handleRenameDialogOpen}
             handleDeletePicture={handleDeletePicture}
             onNext={handleNext}
             onBefore={handleBefore}

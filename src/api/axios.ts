@@ -17,6 +17,10 @@ class API {
     return headers;
   }
 
+  private handleFetchError(err:string){
+    console.error(`Error in Axios ${err}`)
+  }
+
   signin(username: string, password: string, cb: Function) {
     this.server
       .post("/user", { username, password })
@@ -25,9 +29,7 @@ class API {
           if (cb) cb(res.data);
         }
       })
-      .catch((err) => {
-        console.log({ err });
-      });
+      .catch(this.handleFetchError)
   }
 
   signup(username: string, password: string, cb: Function) {
@@ -38,9 +40,7 @@ class API {
           if (cb) cb(res.data);
         }
       })
-      .catch((err) => {
-        console.log({ err });
-      });
+      .catch(this.handleFetchError)
   }
 
   getPictures(cb: Function) {
@@ -51,14 +51,11 @@ class API {
         },
       })
       .then((res: any) => {
-        // console.log({ res });
         if (!res.data.statusCode) {
           if (cb) cb(res.data);
         }
       })
-      .catch((err) => {
-        console.log({ err });
-      });
+      .catch(this.handleFetchError)
   }
 
   uploadPicture(file: any, cb: Function) {
@@ -74,13 +71,9 @@ class API {
       .then((res: any) => {
         if (!res.data.statusCode) {
           if (cb) cb(res.data);
-        } else {
-          console.log(res.data);
         }
       })
-      .catch((err) => {
-        console.log({ err });
-      });
+      .catch(this.handleFetchError)
   }
 
   updatePictureName(id: string, name: any, cb: Function) {
@@ -99,9 +92,7 @@ class API {
           if (cb) cb(res.data);
         }
       })
-      .catch((err) => {
-        console.log({ err });
-      });
+      .catch(this.handleFetchError)
   }
 
   deletePicture(id: string, cb: Function) {
@@ -116,9 +107,21 @@ class API {
           if (cb) cb(res.data);
         }
       })
-      .catch((err) => {
-        console.log({ err });
-      });
+      .catch(this.handleFetchError)
+  }
+
+  downloadPicture(id:string, cb:Function){
+    this.server.get(`/picture/${id}`,{
+      headers:{
+        authorization: `Bearer ${getItem('token')}`,
+      }
+    })
+    .then((res:any)=>{
+      if(!res.data.statusCode){
+        if(cb) cb(res.data)
+      }
+    })
+    .catch(this.handleFetchError)
   }
 }
 
