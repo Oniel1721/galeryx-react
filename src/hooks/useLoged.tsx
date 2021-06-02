@@ -15,6 +15,7 @@ const useLoged = ()=>{
     const setLogout = ()=>{
         console.log('llamado')
         localStorage.removeItem('token')
+        localStorage.removeItem('username')
         setLoged(getLogedStatus())
     }
 

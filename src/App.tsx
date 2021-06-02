@@ -1,6 +1,6 @@
 import React from 'react'
 import { BrowserRouter, Route, Redirect } from 'react-router-dom'
-import { 
+import {
   ThemeProvider,
 } from "@material-ui/core";
 
@@ -11,21 +11,22 @@ import Home from "./components/Home";
 
 
 
-const App = ()=> {
-  
+const App = () => {
+
 
   return (
-    <BrowserRouter>
-    <ThemeProvider theme={theme}>
-    <Route exact path="/">
-        <Home />
-    </Route>
-    <Route >
-      <Redirect to="/" />
-    </Route>
-    </ThemeProvider>
-    </BrowserRouter>
+      <BrowserRouter>
+        <ThemeProvider theme={theme}>
+          <Route exact path="/">
+            <Home />
+          </Route>
+          <Route >
+            <Redirect to="/" />
+          </Route>
+        </ThemeProvider>
+      </BrowserRouter>
   );
 }
+
 
 export default App;

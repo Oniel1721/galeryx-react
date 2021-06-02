@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import io from 'socket.io-client'
 
 import {
   Grid,
@@ -90,6 +91,12 @@ const useStyles = makeStyles({
 const Gallery = (props: any) => {
   const classes = useStyles();
 
+  const socket = io('http://localhost:3500', {forceNew: true})
+  socket.connect()
+
+  console.log({socket})
+
+  socket.emit('connection', {username: 'fulano'})
   const [pictures, setPictures] = useState<any>([]);
 
   const [dragActive, setDragActive] = useState(false);
@@ -101,6 +108,12 @@ const Gallery = (props: any) => {
   const [showRenameDialog, setShowRenameDialog] = useState(false)
   const [renameValue, setRenameValue] = useState('')
 
+  const emitActionEvent = () => {
+    const username = getItem('username')
+    socket.emit('action', { username })
+    console.log('action')
+  }
+
   const getPictures = () => {
     if (getItem("token")) {
       setLoading(true);
@@ -110,6 +123,7 @@ const Gallery = (props: any) => {
       });
     }
   };
+
 
   useEffect(() => {
     getPictures();
@@ -157,6 +171,7 @@ const Gallery = (props: any) => {
   const uploadImage = (image: any) => {
     API.uploadPicture(image, (data: any) => {
       getPictures();
+      emitActionEvent()
     });
   };
 
@@ -204,13 +219,15 @@ const Gallery = (props: any) => {
   const handleDeletePicture = (e: any) => {
     API.deletePicture(pictures[index]._id, (data: any) => {
       getPictures();
+      emitActionEvent()
     });
   };
 
   const handleChangeName = (e: any) => {
-    if(renameValue){
+    if (renameValue) {
       API.updatePictureName(pictures[index]._id, renameValue, (data: any) => {
         getPictures();
+        emitActionEvent()
       });
       setRenameValue('')
       setShowRenameDialog(false)
@@ -263,6 +280,20 @@ const Gallery = (props: any) => {
   if (pictures.length) {
     if (index > pictures.length - 1) handleNext();
   }
+
+  useEffect(() => {
+    const socket = io('http://localhost:4000')
+    socket.on('action', ({ username }) => {
+      console.log({ username })
+      // if(username === getItem('username')){
+      //   if(getItem('token')){
+      //     API.getPictures((data:any)=>{
+      //       setPictures(data)
+      //     })
+      //   }
+      // }
+    })
+  }, [])
 
 
   return (

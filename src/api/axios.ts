@@ -1,5 +1,5 @@
 import axios from "axios";
-import { getItem } from "./localStorage";
+import { getItem, setItem } from "./localStorage";
 
 const createApi = () => axios.create({ baseURL: "http://localhost:4000" });
 
@@ -37,6 +37,7 @@ class API {
       .post("/user/create", { username, password })
       .then((res: any) => {
         if (res.data.secretToken) {
+          setItem('username', res.data.username)
           if (cb) cb(res.data);
         }
       })
@@ -52,6 +53,7 @@ class API {
       })
       .then((res: any) => {
         if (!res.data.statusCode) {
+          setItem('username', res.data.username)
           if (cb) cb(res.data);
         }
       })
